@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技术知识闯关游戏</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .game-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 80%;
+            max-width: 800px;
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .level-info {
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #7f8c8d;
+        }
+        .question {
+            font-size: 20px;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .option {
+            padding: 12px 20px;
+            background-color: #ecf0f1;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            font-size: 16px;
+        }
+        .option:hover {
+            background-color: #3498db;
+            color: white;
+        }
+        .option.selected {
+            background-color: #3498db;
+            color: white;
+        }
+        .option.correct {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .option.incorrect {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .feedback {
+            margin-bottom: 20px;
+            font-size: 18px;
+            min-height: 27px;
+        }
+        .correct-feedback {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        .incorrect-feedback {
+            color: #e74c3c;
+        }
+        .next-btn {
+            padding: 12px 30px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: none;
+        }
+        .next-btn:hover {
+            background-color: #27ae60;
+        }
+        .progress-bar {
+            height: 10px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background-color: #3498db;
+            width: 0%;
+            transition: width 0.5s;
+        }
+        .completion-message {
+            font-size: 24px;
+            color: #2ecc71;
+            font-weight: bold;
+            margin: 20px 0;
+            display: none;
+        }
+        .restart-btn {
+            padding: 12px 30px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: none;
+        }
+        .restart-btn:hover {
+            background-color: #2980b9;
+        }
+        .retry-btn {
+            padding: 12px 30px;
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: none;
+        }
+        .retry-btn:hover {
+            background-color: #d35400;
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h1>技术知识闯关游戏</h1>
+    <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+    </div>
+    <div class="level-info" id="level-info">第1关/共20关</div>
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="next-btn">下一关</button>
+    <button class="retry-btn" id="retry-btn">重新选择</button>
+    <div class="completion-message" id="completion-message">恭喜你完成了所有关卡！</div>
+    <button class="restart-btn" id="restart-btn">重新开始</button>
+</div>
+
+<script>
+    // 题库 - 20道题
+    const questions = [
+        {
+            category: "前端",
+            question: "以下哪个不是JavaScript的基本数据类型？",
+            options: [
+                "String",
+                "Number",
+                "Boolean",
+                "Array"
+            ],
+            answer: 3,
+            explanation: "JavaScript的基本数据类型包括String、Number、Boolean、Null、Undefined和Symbol(ES6新增)。Array是引用类型。"
+        },
+        {
+            category: "前端",
+            question: "CSS中哪个属性用于改变文本颜色？",
+            options: [
+                "font-color",
+                "text-color",
+                "color",
+                "font-style"
+            ],
+            answer: 2,
+            explanation: "CSS中使用color属性来设置文本颜色，例如color: red;"
+        },
+        {
+            category: "前端",
+            question: "React中用于管理组件内部状态的是哪个Hook？",
+            options: [
+                "useEffect",
+                "useContext",
+                "useState",
+                "useReducer"
+            ],
+            answer: 2,
+            explanation: "useState是React中最常用的Hook，用于在函数组件中添加状态管理。"
+        },
+        {
+            category: "后端",
+            question: "在RESTful API设计中，以下哪个HTTP方法通常用于更新资源？",
+            options: [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE"
+            ],
+            answer: 2,
+            explanation: "PUT方法用于更新资源，GET用于获取资源，POST用于创建资源，DELETE用于删除资源。"
+        },
+        {
+            category: "后端",
+            question: "以下哪个不是常见的NoSQL数据库？",
+            options: [
+                "MongoDB",
+                "Redis",
+                "PostgreSQL",
+                "Cassandra"
+            ],
+            answer: 2,
+            explanation: "PostgreSQL是关系型数据库，其他选项都是NoSQL数据库。"
+        },
+        {
+            category: "后端",
+            question: "Python中用于创建虚拟环境的命令是？",
+            options: [
+                "python create venv",
+                "python -m venv",
+                "pip install venv",
+                "virtualenv create"
+            ],
+            answer: 1,
+            explanation: "Python 3中创建虚拟环境的正确命令是python -m venv <目录名>。"
+        },
+        {
+            category: "数据库",
+            question: "SQL中用于连接两个表的子句是？",
+            options: [
+                "UNION",
+                "JOIN",
+                "LINK",
+                "CONNECT"
+            ],
+            answer: 1,
+            explanation: "JOIN子句用于根据两个表之间的相关列合并行。"
+        },
+        {
+            category: "数据库",
+            question: "以下哪个不是数据库事务的特性(ACID)？",
+            options: [
+                "原子性(Atomicity)",
+                "一致性(Consistency)",
+                "隔离性(Isolation)",
+                "关联性(Association)"
+            ],
+            answer: 3,
+            explanation: "数据库事务的ACID特性是原子性、一致性、隔离性和持久性(Durability)。"
+        },
+        {
+            category: "计算机网络",
+            question: "TCP和UDP的主要区别是什么？",
+            options: [
+                "TCP是无连接的，UDP是面向连接的",
+                "TCP不保证可靠性，UDP保证可靠性",
+                "TCP是面向连接的，UDP是无连接的",
+                "TCP比UDP速度更快"
+            ],
+            answer: 2,
+            explanation: "TCP是面向连接的、可靠的传输协议，而UDP是无连接的、不可靠的传输协议。"
+        },
+        {
+            category: "计算机网络",
+            question: "HTTP状态码404表示什么？",
+            options: [
+                "服务器错误",
+                "未授权",
+                "未找到",
+                "请求成功"
+            ],
+            answer: 2,
+            explanation: "HTTP 404状态码表示服务器无法找到请求的资源。"
+        },
+        {
+            category: "操作系统",
+            question: "以下哪个不是操作系统的功能？",
+            options: [
+                "进程管理",
+                "内存管理",
+                "文件管理",
+                "硬件设计"
+            ],
+            answer: 3,
+            explanation: "操作系统的主要功能包括进程管理、内存管理、文件管理、设备管理等，但不包括硬件设计。"
+        },
+        {
+            category: "操作系统",
+            question: "Linux中用于查看当前目录路径的命令是？",
+            options: [
+                "ls",
+                "cd",
+                "pwd",
+                "dir"
+            ],
+            answer: 2,
+            explanation: "pwd(print working directory)命令用于显示当前工作目录的完整路径。"
+        },
+        {
+            category: "算法",
+            question: "以下哪种排序算法的时间复杂度是O(n log n)？",
+            options: [
+                "冒泡排序",
+                "选择排序",
+                "快速排序",
+                "插入排序"
+            ],
+            answer: 2,
+            explanation: "快速排序的平均时间复杂度是O(n log n)，其他选项的时间复杂度都是O(n²)。"
+        },
+        {
+            category: "算法",
+            question: "以下哪种数据结构是先进后出(FILO)的？",
+            options: [
+                "队列",
+                "栈",
+                "链表",
+                "树"
+            ],
+            answer: 1,
+            explanation: "栈(Stack)是先进后出的数据结构，队列(Queue)是先进先出的。"
+        },
+        {
+            category: "面向对象",
+            question: "以下哪个不是面向对象编程的三大特性？",
+            options: [
+                "封装",
+                "继承",
+                "多态",
+                "循环"
+            ],
+            answer: 3,
+            explanation: "面向对象编程的三大特性是封装、继承和多态，循环是编程结构不是OOP特性。"
+        },
+        {
+            category: "面向对象",
+            question: "设计模式中，单例模式(Singleton)的目的是什么？",
+            options: [
+                "确保一个类只有一个实例",
+                "创建一系列相关对象",
+                "将对象组合成树形结构",
+                "定义算法族"
+            ],
+            answer: 0,
+            explanation: "单例模式确保一个类只有一个实例，并提供全局访问点。"
+        },
+        {
+            category: "安全",
+            question: "以下哪种加密算法是对称加密算法？",
+            options: [
+                "RSA",
+                "ECC",
+                "AES",
+                "DSA"
+            ],
+            answer: 2,
+            explanation: "AES是对称加密算法，其他选项都是非对称加密算法。"
+        },
+        {
+            category: "安全",
+            question: "HTTPS协议中用于加密传输的是哪个协议？",
+            options: [
+                "HTTP",
+                "FTP",
+                "SSL/TLS",
+                "SSH"
+            ],
+            answer: 2,
+            explanation: "HTTPS = HTTP + SSL/TLS，SSL/TLS协议提供加密和安全认证。"
+        },
+        {
+            category: "开发工具",
+            question: "Git中用于查看提交历史的命令是？",
+            options: [
+                "git status",
+                "git log",
+                "git history",
+                "git commit"
+            ],
+            answer: 1,
+            explanation: "git log命令用于显示提交历史，git status显示工作区状态。"
+        },
+        {
+            category: "开发工具",
+            question: "以下哪个不是常见的代码编辑器？",
+            options: [
+                "Visual Studio Code",
+                "IntelliJ IDEA",
+                "Eclipse",
+                "MySQL Workbench"
+            ],
+            answer: 3,
+            explanation: "MySQL Workbench是数据库管理工具，不是代码编辑器。"
+        }
+    ];
+
+    // 游戏状态
+    let currentLevel = 0;
+    let selectedOption = null;
+    let isAnswered = false;
+
+    // DOM元素
+    const questionElement = document.getElementById('question');
+    const optionsElement = document.getElementById('options');
+    const feedbackElement = document.getElementById('feedback');
+    const nextBtn = document.getElementById('next-btn');
+    const retryBtn = document.getElementById('retry-btn');
+    const levelInfoElement = document.getElementById('level-info');
+    const progressElement = document.getElementById('progress');
+    const completionMessage = document.getElementById('completion-message');
+    const restartBtn = document.getElementById('restart-btn');
+
+    // 初始化游戏
+    function initGame() {
+        currentLevel = 0;
+        loadQuestion();
+    }
+
+    // 加载问题
+    function loadQuestion() {
+        isAnswered = false;
+        selectedOption = null;
+        feedbackElement.textContent = '';
+        feedbackElement.className = 'feedback';
+        nextBtn.style.display = 'none';
+        retryBtn.style.display = 'none';
+
+        const question = questions[currentLevel];
+        questionElement.textContent = `[${question.category}] ${question.question}`;
+
+        optionsElement.innerHTML = '';
+        question.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.className = 'option';
+            button.textContent = option;
+            button.onclick = () => selectOption(index);
+            optionsElement.appendChild(button);
+        });
+
+        levelInfoElement.textContent = `第${currentLevel + 1}关/共${questions.length}关`;
+        progressElement.style.width = `${(currentLevel / questions.length) * 100}%`;
+    }
+
+    // 选择选项
+    function selectOption(index) {
+        if (isAnswered) return;
+
+        // 移除之前的选择
+        if (selectedOption !== null) {
+            const prevSelected = optionsElement.children[selectedOption];
+            prevSelected.classList.remove('selected');
+        }
+
+        // 设置新的选择
+        selectedOption = index;
+        const option = optionsElement.children[index];
+        option.classList.add('selected');
+
+        // 检查答案
+        checkAnswer();
+    }
+
+    // 检查答案
+    function checkAnswer() {
+        if (selectedOption === null) return;
+
+        isAnswered = true;
+        const question = questions[currentLevel];
+        const selectedButton = optionsElement.children[selectedOption];
+
+        if (selectedOption === question.answer) {
+            feedbackElement.textContent = '正确！';
+            feedbackElement.className = 'feedback correct-feedback';
+            selectedButton.className = 'option correct';
+            nextBtn.style.display = 'inline-block';
+        } else {
+            feedbackElement.textContent = '出错啦！再来试试吧！';
+            feedbackElement.className = 'feedback incorrect-feedback';
+            selectedButton.className = 'option incorrect';
+            retryBtn.style.display = 'inline-block';
+        }
+    }
+
+    // 允许重新选择
+    function allowRetry() {
+        isAnswered = false;
+        selectedOption = null;
+        feedbackElement.textContent = '';
+        feedbackElement.className = 'feedback';
+        retryBtn.style.display = 'none';
+
+        // 重置所有选项样式
+        const question = questions[currentLevel];
+        question.options.forEach((_, index) => {
+            const option = optionsElement.children[index];
+            option.className = 'option';
+        });
+    }
+
+    // 下一关
+    function nextLevel() {
+        currentLevel++;
+        if (currentLevel < questions.length) {
+            loadQuestion();
+        } else {
+            // 游戏完成
+            questionElement.style.display = 'none';
+            optionsElement.style.display = 'none';
+            feedbackElement.style.display = 'none';
+            nextBtn.style.display = 'none';
+            retryBtn.style.display = 'none';
+            progressElement.style.width = '100%';
+            completionMessage.style.display = 'block';
+            restartBtn.style.display = 'inline-block';
+        }
+    }
+
+    // 重新开始游戏
+    function restartGame() {
+        questionElement.style.display = 'block';
+        optionsElement.style.display = 'flex';
+        feedbackElement.style.display = 'block';
+        completionMessage.style.display = 'none';
+        restartBtn.style.display = 'none';
+        initGame();
+    }
+
+    // 事件监听
+    nextBtn.addEventListener('click', nextLevel);
+    retryBtn.addEventListener('click', allowRetry);
+    restartBtn.addEventListener('click', restartGame);
+
+    // 开始游戏
+    initGame();
+</script>
+</body>
+</html>
